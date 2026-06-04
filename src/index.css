@@ -1,0 +1,159 @@
+/* ── Fonts ─────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Root tokens (dark defaults — overridden by applyTheme() at runtime) ───── */
+:root {
+  --font-sans:  'Space Grotesk', sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+
+  /* Surfaces */
+  --bg-page:          #020408;
+  --panel-bg:         rgba(8, 10, 18, 0.72);
+  --panel-bg-light:   rgba(14, 18, 32, 0.55);
+  --surface:          rgba(255, 255, 255, 0.03);
+  --surface-hover:    rgba(255, 255, 255, 0.06);
+
+  /* Borders */
+  --border:           rgba(255, 255, 255, 0.07);
+  --border-hover:     rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --text-primary:     #F1F5F9;
+  --text-secondary:   #94A3B8;
+  --text-muted:       #475569;
+
+  /* Shadows */
+  --panel-shadow:     0 8px 48px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.05) inset;
+  --blur:             blur(20px) saturate(140%);
+  --statusbar-bg:     rgba(4, 6, 12, 0.85);
+
+  /* Semantic */
+  --high:             #FF003C;
+  --high-glow:        rgba(255, 0, 60, 0.35);
+  --mod:              #FF8A00;
+  --mod-glow:         rgba(255, 138, 0, 0.3);
+  --low:              #FFD600;
+  --low-glow:         rgba(255, 214, 0, 0.25);
+  --accent-blue:      #3B82F6;
+  --accent-cyan:      #06B6D4;
+}
+
+/* ── Page shell ────────────────────────────────────────────────────────────── */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-page);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+/* ── Satellite theme: panels need pointer-events restored ──────────────────── */
+[data-theme='satellite'] body {
+  background: transparent;
+}
+
+/* ── Scanline atmosphere ───────────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.035) 3px,
+    rgba(0, 0, 0, 0.035) 4px
+  );
+}
+
+/* ── Range slider thumb ────────────────────────────────────────────────────── */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--accent-blue);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.45);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--accent-blue);
+  cursor: pointer;
+}
+
+/* ── Panel pointer-events (re-enable on glass panels) ─────────────────────── */
+.glass-panel {
+  pointer-events: all;
+}
+
+/* ── Scrollbars ────────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 128, 128, 0.15) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 3px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.18);
+  border-radius: 2px;
+}
+
+/* ── Keyframe animations ───────────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes pulseLogo {
+  0%, 100% { box-shadow: 0 0 20px var(--high-glow), 0 2px 8px rgba(0,0,0,0.4); }
+  50%       { box-shadow: 0 0 32px rgba(255,0,60,0.55), 0 2px 8px rgba(0,0,0,0.4); }
+}
+
+@keyframes fadeInPanel {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── MapLibre attribution (keeps it readable on dark map) ──────────────────── */
+.maplibregl-ctrl-attrib {
+  font-size: 9px !important;
+  opacity: 0.5;
+}
+
+/* ── deck.gl tooltip ───────────────────────────────────────────────────────── */
+.deck-tooltip {
+  background: var(--panel-bg) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--border-hover) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.55) !important;
+  white-space: pre-line !important;
+}
