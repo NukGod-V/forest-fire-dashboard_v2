@@ -46,40 +46,40 @@ export const THEMES = {
   },
 
   satellite: {
-    // Surfaces — clean frosted glass readable over green/blue satellite imagery
+    // Surfaces — Tactical dark glass over satellite imagery
     '--bg-page':           'transparent',
-    '--panel-bg':          'rgba(255, 255, 255, 0.82)',
-    '--panel-bg-light':    'rgba(245, 248, 255, 0.75)',
-    '--surface':           'rgba(0, 0, 0, 0.04)',
-    '--surface-hover':     'rgba(0, 0, 0, 0.08)',
+    '--panel-bg':          'rgba(15, 23, 42, 0.75)', // Dark slate glass
+    '--panel-bg-light':    'rgba(30, 41, 59, 0.65)',
+    '--surface':           'rgba(255, 255, 255, 0.05)',
+    '--surface-hover':     'rgba(255, 255, 255, 0.1)',
 
     // Borders
-    '--border':            'rgba(0, 0, 0, 0.10)',
-    '--border-hover':      'rgba(0, 0, 0, 0.20)',
+    '--border':            'rgba(255, 255, 255, 0.15)',
+    '--border-hover':      'rgba(255, 255, 255, 0.25)',
 
-    // Text
-    '--text-primary':      '#0F172A',
-    '--text-secondary':    '#334155',
-    '--text-muted':        '#94A3B8',
+    // Text (Reverted to Light Text for contrast)
+    '--text-primary':      '#F8FAFC',
+    '--text-secondary':    '#CBD5E1',
+    '--text-muted':        '#64748B',
 
     // Shadows & blur
-    '--panel-shadow':      '0 8px 48px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset',
-    '--blur':              'blur(24px) saturate(160%)',
+    '--panel-shadow':      '0 8px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.1) inset',
+    '--blur':              'blur(16px) saturate(120%)',
 
     // Status bar
-    '--statusbar-bg':      'rgba(255, 255, 255, 0.88)',
+    '--statusbar-bg':      'rgba(15, 23, 42, 0.85)',
 
-    // Accents — same semantic colors, slightly deeper for light bg legibility
-    '--high':              '#D90030',
-    '--high-glow':         'rgba(217, 0, 48, 0.25)',
-    '--mod':               '#D97706',
-    '--mod-glow':          'rgba(217, 119, 6, 0.22)',
-    '--low':               '#B45309',
-    '--low-glow':          'rgba(180, 83, 9, 0.18)',
-    '--accent-blue':       '#2563EB',
-    '--accent-cyan':       '#0891B2',
+    // Accents
+    '--high':              '#FF003C',
+    '--high-glow':         'rgba(255, 0, 60, 0.35)',
+    '--mod':               '#FF8A00',
+    '--mod-glow':          'rgba(255, 138, 0, 0.3)',
+    '--low':               '#FFD600',
+    '--low-glow':          'rgba(255, 214, 0, 0.25)',
+    '--accent-blue':       '#3B82F6',
+    '--accent-cyan':       '#06B6D4',
 
-    '--chart-grid':        'rgba(0,0,0,0.06)',
+    '--chart-grid':        'rgba(255,255,255,0.06)',
     '--chart-tick':        '#94A3B8',
   },
 };

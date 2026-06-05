@@ -195,9 +195,10 @@ export default function Sidebar() {
         <FilterSlider
           label="Min FRP"
           value={filters.minFrp}
-          min={0} max={500} step={5}
+          min={0} max={100} step={0.5}
           unit=" MW"
-          onChange={(v) => setFilters({ minFrp: v })}
+          // Change it to look like this:
+          onChange={(value) => setFilters({ ...filters, minFrp: parseFloat(value.target ? value.target.value : value) || 0 })}
         />
 
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Date Range</div>

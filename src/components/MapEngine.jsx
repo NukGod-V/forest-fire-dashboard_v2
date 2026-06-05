@@ -11,13 +11,12 @@
  *     manages its own state to avoid the lag bug.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import { HexagonLayer } from '@deck.gl/aggregation-layers';
-import Map from 'react-map-gl/maplibre';
+import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-
 import { useAppContext } from '../context/AppContext';
 
 // ── Basemap styles ────────────────────────────────────────────────────────────
@@ -50,6 +49,22 @@ const INITIAL_VIEW_STATE = {
 export default function MapEngine() {
   // Read shared state from context — never own it here
   const { theme, viewMode, filteredData } = useAppContext();
+
+  // 1. We store the camera state in React now
+  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+
+  // 2. Custom button functions with smooth animations!
+  const handleZoom = (delta) => {
+    setViewState((prev) => ({
+      ...prev,
+      zoom: prev.zoom + delta,
+      transitionDuration: 300 // Smooth zoom animation
+    }));
+  };
+
+  const handleReset = () => {
+    setViewState({ ...INITIAL_VIEW_STATE, transitionDuration: 500 }); // Flies back to default
+  };
 
   // ── Layers (verbatim from engineer's App.jsx) ─────────────────────────────
   const scatterLayer = new ScatterplotLayer({
@@ -97,16 +112,72 @@ export default function MapEngine() {
     return null;
   };
 
+  const controlStyle = {
+    background: 'var(--panel-bg)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border)',
+    borderRadius: '8px',
+    width: '40px',
+    height: '40px',
+    cursor: 'pointer',
+    fontSize: '22px',
+    fontWeight: 'bold',
+    backdropFilter: 'var(--blur)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease'
+  };
+
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+
+      {/* 1. DeckGL is now a Controlled Component */}
       <DeckGL
-        initialViewState={INITIAL_VIEW_STATE}
-        controller={true}                          /* ← never remove; prevents lag */
+        viewState={viewState}
+        onViewStateChange={({ viewState }) => setViewState(viewState)}
+        controller={true}
         layers={viewMode === '3d-hex' ? [hexLayer] : [scatterLayer]}
-        getTooltip={getTooltip}
+        getTooltip={({object}) => {
+          if (!object) return null;
+
+          // If it's a 3D Hexagon, it will have a 'points' array
+          if (object.points) {
+            return `Fires in tactical sector: ${object.points.length}`;
+          }
+
+          // If it's a 2D Scatter dot, it will have 'brightness'
+          if (object.brightness) {
+            return `Brightness: ${object.brightness}K \nSatellite: ${object.satellite}`;
+          }
+
+          return null;
+        }}
       >
         <Map mapStyle={MAP_THEMES[theme]} />
       </DeckGL>
+
+      {/* 2. Custom, Themeable UI Controls */}
+      <div style={{
+        position: 'absolute',
+        right: '380px', // Pushes past the Stats Panel
+        top: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        zIndex: 10
+      }}>
+
+        {/* Zoom In */}
+        <button onClick={() => handleZoom(1)} style={controlStyle}>+</button>
+
+        {/* Zoom Out */}
+        <button onClick={() => handleZoom(-1)} style={controlStyle}>-</button>
+
+        {/* Reset Camera / Home */}
+        <button onClick={handleReset} style={{...controlStyle, fontSize: '16px'}}>⌂</button>
+      </div>
+
     </div>
   );
 }

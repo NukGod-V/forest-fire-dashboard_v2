@@ -55,19 +55,43 @@ export function SectionHeading({ children }) {
 export function KpiCard({ label, value, unit, color, delta, deltaUp, style }) {
   return (
     <div style={{
-      background:    'var(--surface)',
-      border:        '1px solid var(--border)',
-      borderRadius:  12,
-      padding:       12,
-      transition:    'background 0.2s, border-color 0.2s',
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 12,
+      padding: '16px',
+      display: 'grid',
+      gridTemplateRows: 'auto 1fr auto', // Top Label, Middle Value, Bottom Unit
+      height: '100%', // Forces it to fill parent
+      minHeight: '120px', // Prevents it from collapsing
+      transition: 'background 0.2s, border-color 0.2s',
       ...style,
     }}>
-      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: 6 }}>
+
+      {/* 1. Top Label */}
+      <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
         {label}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 500, lineHeight: 1, color: color ?? 'var(--text-primary)' }}>
-        {value}
-        {unit && <span style={{ fontSize: 12, marginLeft: 4, color: 'var(--text-muted)' }}>{unit}</span>}
+
+      {/* 2. Middle Value (Forced Centering) */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center', // Perfect vertical center
+        width: '100%',
+        overflow: 'hidden'
+      }}>
+        <span style={{
+          fontSize: 'clamp(16px, 1.2vw, 28px)', // Aggressive shrinking for long text
+          fontWeight: 'bold',
+          color: color || 'var(--text-primary)',
+          lineHeight: '1.2'
+        }}>
+          {value}
+        </span>
+      </div>
+
+      {/* 3. Bottom Unit */}
+      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+        {unit}
       </div>
       {delta && (
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
