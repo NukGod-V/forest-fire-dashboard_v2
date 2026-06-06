@@ -58,7 +58,7 @@ function StatusRow({ label, value, valueColor }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen = false }) {
   const {
     theme, setTheme,
     viewMode, setViewMode,
@@ -74,7 +74,10 @@ export default function Sidebar() {
   const lp = total ? Math.round(low  / total * 100) : 0;
 
   return (
-    <GlassPanel style={{ gridColumn: 1, gridRow: '1 / -1', animation: 'fadeInPanel 0.5s ease-out 0.1s both' }}>
+    <GlassPanel
+      className={`sidebar-panel${mobileOpen ? ' mobile-open' : ''}`}
+      style={{ gridColumn: 1, gridRow: '1 / -1', animation: 'fadeInPanel 0.5s ease-out 0.1s both' }}
+    >
       {/* ── Header ── */}
       <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -103,7 +106,7 @@ export default function Sidebar() {
       </div>
 
       {/* ── Scrollable body ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 18, scrollbarWidth: 'thin', scrollbarColor: 'rgba(128,128,128,0.15) transparent' }}>
+      <div className="panel-scroll-body" style={{ flex: 1, overflowY: 'auto', padding: 18, scrollbarWidth: 'thin', scrollbarColor: 'rgba(128,128,128,0.15) transparent' }}>
 
         {/* KPIs */}
         <SectionHeading>Situation Overview</SectionHeading>
@@ -195,10 +198,9 @@ export default function Sidebar() {
         <FilterSlider
           label="Min FRP"
           value={filters.minFrp}
-          min={0} max={100} step={0.5}
+          min={0} max={500} step={5}
           unit=" MW"
-          // Change it to look like this:
-          onChange={(value) => setFilters({ ...filters, minFrp: parseFloat(value.target ? value.target.value : value) || 0 })}
+          onChange={(v) => setFilters({ minFrp: v })}
         />
 
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Date Range</div>

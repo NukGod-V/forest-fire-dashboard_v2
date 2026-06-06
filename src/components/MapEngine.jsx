@@ -1,22 +1,24 @@
 /**
  * MapEngine.jsx
  *
- * BLACK-BOX map wrapper.  This file is a direct port of the engineer's
- * App.jsx, with exactly two changes:
- *   1. State (theme, viewMode, fireData) is READ from AppContext instead
- *      of being owned here — so the UI sidebars can toggle them.
- *   2. The original inline control buttons are REMOVED (the sidebars own them).
+ * BLACK-BOX map wrapper.  Incorporates the engineer's controlled-viewState
+ * approach (smooth zoom/reset animations) from the updated App.jsx.
  *
- * ⚠️  Do NOT add viewport/camera useState here — deck.gl's controller={true}
- *     manages its own state to avoid the lag bug.
+ * Mobile change: the controls wrapper gains className="map-controls".
+ * The CSS media query in index.css moves it from right:380px/top:20px
+ * to right:16px/bottom:120px on screens ≤ 768px.
+ *
+ * ⚠️  controller={true} stays — deck.gl merges external viewState changes
+ *     smoothly; removing it causes the lag bug.
  */
 
 import React, { useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import { HexagonLayer } from '@deck.gl/aggregation-layers';
-import Map, { NavigationControl } from 'react-map-gl/maplibre';
+import Map from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
 import { useAppContext } from '../context/AppContext';
 
 // ── Basemap styles ────────────────────────────────────────────────────────────
@@ -37,7 +39,7 @@ const MAP_THEMES = {
   },
 };
 
-// ── Initial camera — deck.gl owns this after mount ───────────────────────────
+// ── Initial camera state ──────────────────────────────────────────────────────
 const INITIAL_VIEW_STATE = {
   longitude: 78.9629,
   latitude:  20.5937,
@@ -46,37 +48,54 @@ const INITIAL_VIEW_STATE = {
   bearing:   0,
 };
 
+// ── Shared control button style (reads CSS vars → theme-aware) ────────────────
+const controlStyle = {
+  background:     'var(--panel-bg)',
+  color:          'var(--text-primary)',
+  border:         '1px solid var(--border)',
+  borderRadius:   '8px',
+  width:          '40px',
+  height:         '40px',
+  cursor:         'pointer',
+  fontSize:       '22px',
+  fontWeight:     'bold',
+  backdropFilter: 'var(--blur)',
+  display:        'flex',
+  alignItems:     'center',
+  justifyContent: 'center',
+  transition:     'all 0.3s ease',
+};
+
 export default function MapEngine() {
-  // Read shared state from context — never own it here
+  // Shared app state from context
   const { theme, viewMode, filteredData } = useAppContext();
 
-  // 1. We store the camera state in React now
+  // Camera state owned here for smooth programmatic zoom / reset
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
 
-  // 2. Custom button functions with smooth animations!
   const handleZoom = (delta) => {
     setViewState((prev) => ({
       ...prev,
-      zoom: prev.zoom + delta,
-      transitionDuration: 300 // Smooth zoom animation
+      zoom: Math.max(1, Math.min(20, prev.zoom + delta)),
+      transitionDuration: 300,
     }));
   };
 
   const handleReset = () => {
-    setViewState({ ...INITIAL_VIEW_STATE, transitionDuration: 500 }); // Flies back to default
+    setViewState({ ...INITIAL_VIEW_STATE, transitionDuration: 500 });
   };
 
-  // ── Layers (verbatim from engineer's App.jsx) ─────────────────────────────
+  // ── Layers ────────────────────────────────────────────────────────────────
   const scatterLayer = new ScatterplotLayer({
-    id: 'nasa-scatter',
-    data: filteredData,
-    pickable: true,
-    opacity: 0.8,
-    radiusScale: 1000,
+    id:              'nasa-scatter',
+    data:            filteredData,
+    pickable:        true,
+    opacity:         0.8,
+    radiusScale:     1000,
     radiusMinPixels: 2,
     radiusMaxPixels: 10,
-    getPosition: (d) => [d.longitude, d.latitude],
-    getFillColor: (d) => {
+    getPosition:     (d) => [d.longitude, d.latitude],
+    getFillColor:    (d) => {
       if (d.brightness >= 340) return [255, 0, 0];
       if (d.brightness >= 320) return [255, 140, 0];
       return [255, 215, 0];
@@ -84,98 +103,64 @@ export default function MapEngine() {
   });
 
   const hexLayer = new HexagonLayer({
-    id: 'nasa-hex',
-    data: filteredData,
-    pickable: true,
-    extruded: true,
-    radius: 15000,
+    id:             'nasa-hex',
+    data:           filteredData,
+    pickable:       true,
+    extruded:       true,
+    radius:         15000,
     elevationScale: 50,
-    getPosition: (d) => [d.longitude, d.latitude],
+    getPosition:    (d) => [d.longitude, d.latitude],
     colorRange: [
       [255, 255, 178],
-      [254, 204, 92],
-      [253, 141, 60],
-      [240, 59, 32],
-      [189, 0, 38],
+      [254, 204,  92],
+      [253, 141,  60],
+      [240,  59,  32],
+      [189,   0,  38],
     ],
   });
 
-  // ── Tooltip (verbatim from engineer's App.jsx) ────────────────────────────
+  // ── Tooltip ───────────────────────────────────────────────────────────────
   const getTooltip = ({ object }) => {
     if (!object) return null;
-    if (object.points) {
-      return `Fires in this 15 km sector: ${object.points.length}`;
-    }
-    if (object.brightness) {
-      return `Brightness: ${object.brightness} K\nSatellite: ${object.satellite}`;
-    }
+    if (object.points)    return `Fires in tactical sector: ${object.points.length}`;
+    if (object.brightness) return `Brightness: ${object.brightness} K\nSatellite: ${object.satellite}`;
     return null;
-  };
-
-  const controlStyle = {
-    background: 'var(--panel-bg)',
-    color: 'var(--text-primary)',
-    border: '1px solid var(--border)',
-    borderRadius: '8px',
-    width: '40px',
-    height: '40px',
-    cursor: 'pointer',
-    fontSize: '22px',
-    fontWeight: 'bold',
-    backdropFilter: 'var(--blur)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.3s ease'
   };
 
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
 
-      {/* 1. DeckGL is now a Controlled Component */}
+      {/* Controlled DeckGL — smooth camera transitions via viewState */}
       <DeckGL
         viewState={viewState}
-        onViewStateChange={({ viewState }) => setViewState(viewState)}
-        controller={true}
+        onViewStateChange={({ viewState: vs }) => setViewState(vs)}
+        controller={true}                    /* ← must stay; prevents lag */
         layers={viewMode === '3d-hex' ? [hexLayer] : [scatterLayer]}
-        getTooltip={({object}) => {
-          if (!object) return null;
-
-          // If it's a 3D Hexagon, it will have a 'points' array
-          if (object.points) {
-            return `Fires in tactical sector: ${object.points.length}`;
-          }
-
-          // If it's a 2D Scatter dot, it will have 'brightness'
-          if (object.brightness) {
-            return `Brightness: ${object.brightness}K \nSatellite: ${object.satellite}`;
-          }
-
-          return null;
-        }}
+        getTooltip={getTooltip}
       >
         <Map mapStyle={MAP_THEMES[theme]} />
       </DeckGL>
 
-      {/* 2. Custom, Themeable UI Controls */}
-      <div style={{
-        position: 'absolute',
-        right: '380px', // Pushes past the Stats Panel
-        top: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        zIndex: 10
-      }}>
-
-        {/* Zoom In */}
-        <button onClick={() => handleZoom(1)} style={controlStyle}>+</button>
-
-        {/* Zoom Out */}
-        <button onClick={() => handleZoom(-1)} style={controlStyle}>-</button>
-
-        {/* Reset Camera / Home */}
-        <button onClick={handleReset} style={{...controlStyle, fontSize: '16px'}}>⌂</button>
+      {/*
+        Map controls wrapper.
+        Desktop:  right:380px  top:20px   (clears the 360px StatsPanel + gap)
+        Mobile:   right:16px   bottom:120px  (CSS .map-controls override in index.css)
+      */}
+      <div
+        className="map-controls"
+        style={{
+          position:      'absolute',
+          right:         '380px',
+          top:           '20px',
+          display:       'flex',
+          flexDirection: 'column',
+          gap:           '8px',
+          zIndex:        10,
+        }}
+      >
+        <button onClick={() => handleZoom(1)}  style={controlStyle} aria-label="Zoom in">+</button>
+        <button onClick={() => handleZoom(-1)} style={controlStyle} aria-label="Zoom out">−</button>
+        <button onClick={handleReset}          style={{ ...controlStyle, fontSize: '16px' }} aria-label="Reset view">⌂</button>
       </div>
 
     </div>

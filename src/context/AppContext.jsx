@@ -63,7 +63,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => { applyTheme('dark'); }, []);
 
-  const [viewMode, setViewMode] = useState('3d-hex');
+  const [viewMode, setViewMode] = useState('scatter');
 
   const [fireData, setFireData] = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -77,8 +77,14 @@ export function AppProvider({ children }) {
 
   // 2. MOVED fetchData inside so it can read your filter state dynamically
   const fetchData = useCallback(() => {
-    // If dateTo isn't set, default to today's date
-    const dateParam = filters.dateTo || new Date().toISOString().split('T')[0];
+    const getFallbackDate = () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1); // T-1 offset
+      return yesterday.toISOString().split('T')[0];
+    };
+
+    // If dateTo isn't set, default to yesterday
+    const dateParam = filters.dateTo || getFallbackDate();
     const rangeParam = filters.dayRange || 1;
 
     // 3. DYNAMIC URL
@@ -122,7 +128,7 @@ export function AppProvider({ children }) {
       if (filters.risk !== 'all' && d.risk_level !== filters.risk) return false;
       if (d.frp < filters.minFrp) return false;
       if (filters.dateFrom && new Date(d.acq_date) < new Date(filters.dateFrom)) return false;
-      if (filters.dateTo   && new Date(d.acq_date) > new Date(filters.dateTo + 'T23:59:59')) return false;
+      if (filters.dateTo   && new Date(d.acq_date) > new Date(filters.dateTo + 'T23:59:59Z')) return false;
       return true;
     });
   }, [fireData, filters]);

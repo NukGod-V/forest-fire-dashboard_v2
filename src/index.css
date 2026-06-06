@@ -98,6 +98,12 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ── Panel pointer-events (re-enable on glass panels) ─────────────────────── */
+/*
+ * IMPORTANT: .glass-panel sets pointer-events:all here.
+ * On mobile the panel is position:fixed and sits OUTSIDE the
+ * pointer-events:none grid wrapper — but we still force it here
+ * as a belt-and-suspenders guarantee across all browsers.
+ */
 .glass-panel {
   pointer-events: all;
 }
@@ -156,4 +162,244 @@ input[type='range']::-moz-range-thumb {
   padding: 10px 14px !important;
   box-shadow: 0 4px 24px rgba(0,0,0,0.55) !important;
   white-space: pre-line !important;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE  ≤ 768px
+   ════════════════════════════════════════════════════════════════════════════
+
+   Desktop layout (grid): left sidebar | map | right stats | bottom strip
+   Mobile layout:
+     • BottomPanel  → fixed top strip  (always visible, 2×2 cards)
+     • Map controls → bottom-right corner
+     • StatusBar    → trimmed to fit
+     • Sidebar & StatsPanel → slide-up drawers, toggled by FAB buttons
+     • FAB row      → two pill buttons, fixed above StatusBar
+
+   THE CLICK-THROUGH BUG FIX:
+   The parent grid wrapper has pointer-events:none so map stays interactive.
+   On mobile the drawers are position:fixed and live visually OUTSIDE that
+   wrapper, but because they are DOM children they still inherit the rule.
+   Solution: .sidebar-panel (and its children) explicitly force
+   pointer-events:all with !important so nothing can override it.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── FAB row & scrim: hidden on desktop ──────────────────────────────────── */
+.mobile-fab-row {
+  display: none;
+}
+
+.mobile-scrim {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* bottom is set inline in App.jsx to calc(72vh + 28px)
+     so it only covers the area ABOVE the open drawer.
+     This makes it physically impossible for the scrim to
+     intercept taps on drawer content. */
+  bottom: 0;
+  z-index: 28;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+/* ── Map controls: desktop position ─────────────────────────────────────── */
+/*
+ * The wrapper in MapEngine.jsx gets className="map-controls".
+ * Desktop value (right:380px) lives as inline style.
+ * Mobile override lives in the @media block below.
+ */
+
+/* ════════ MOBILE BREAKPOINT ════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /*
+   * 0. App shell grid → neutralised on mobile.
+   * All panels become position:fixed so the grid columns/rows are irrelevant.
+   * We keep display:grid so the centre transparent placeholder still exists
+   * in the DOM (harmless), but override the column sizes to prevent any
+   * 320px / 360px widths from constraining absolutely-positioned children.
+   */
+  .app-shell {
+    grid-template-columns: 1fr !important;
+    grid-template-rows:    1fr !important;
+    padding:               0 !important;
+    gap:                   0 !important;
+  }
+
+  /* 1. FAB row — shown on mobile */
+  .mobile-fab-row {
+    display: flex;
+    position: fixed;
+    /* Sits between BottomPanel (top strip ~110px) and the map */
+    bottom: 44px;          /* 28px StatusBar + 16px gap */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 35;
+    gap: 10px;
+    pointer-events: all !important;
+  }
+
+  /* 2. Scrim — rendered in DOM always, shown when panel open */
+  .mobile-scrim {
+    display: block;
+  }
+
+  /* 3. Map controls — move to bottom-right, clear StatusBar */
+  .map-controls {
+    right: 16px !important;
+    top: unset !important;
+    bottom: 80px !important;
+    pointer-events: all !important;
+  }
+
+  /* 4. Bottom panel — pin to top of viewport */
+  .bottom-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: unset !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 130px !important;
+    border-radius: 0 0 14px 14px !important;
+    grid-column: unset !important;
+    grid-row: unset !important;
+    z-index: 25 !important;
+    animation: none !important;
+    /* CRITICAL: must be interactable */
+    pointer-events: all !important;
+  }
+
+  /* 4a. 2-column grid for the four stat cards */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    height: auto !important;
+  }
+
+  /* 5. Side panel drawers */
+  /*
+   * Resting state: off-screen below viewport.
+   * The !important on pointer-events fixes the click-through bug —
+   * the parent grid has pointer-events:none; we must explicitly escape it.
+   * position:fixed removes the element from the grid flow entirely,
+   * but pointer-events inheritance still applies in Chrome/Safari.
+   */
+  .sidebar-panel {
+    position: fixed !important;
+    top: unset !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 28px !important;     /* sit directly above StatusBar */
+    width: 100% !important;
+    height: auto !important;
+    max-height: 72vh !important;
+    border-radius: 18px 18px 0 0 !important;
+    grid-column: unset !important;
+    grid-row: unset !important;
+    z-index: 30 !important;
+    animation: none !important;
+    /* OFF-SCREEN: slide below StatusBar */
+    transform: translateY(calc(100% + 28px));
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Disable interactions while hidden */
+    pointer-events: none !important;
+  }
+
+  /* 5a. Drag-handle decoration */
+  .sidebar-panel::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border-hover);
+    border-radius: 2px;
+    margin: 10px auto 4px;
+  }
+
+  /* 5b. OPEN state */
+  .sidebar-panel.mobile-open {
+    transform: translateY(0) !important;
+    /* RE-ENABLE all interactions — this is the primary click-through fix */
+    pointer-events: all !important;
+    /* Make every child interactable too */
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /*
+   * 5c. Belt-and-suspenders: every interactive element inside an open
+   * drawer explicitly restores pointer-events so no inherited 'none'
+   * can sneak through from the grid wrapper.
+   */
+  .sidebar-panel.mobile-open * {
+    pointer-events: auto !important;
+  }
+
+  /* 5d. Scrollable inner body of the drawer */
+  .sidebar-panel.mobile-open .panel-scroll-body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain;
+  }
+
+  /* 6. StatusBar — trim for narrow screens */
+  .status-bar {
+    padding: 0 10px !important;
+    gap: 10px !important;
+  }
+
+  .status-bar-hide-mobile {
+    display: none !important;
+  }
+
+  /* 7. Prevent double-tap zoom on FAB buttons */
+  .mobile-fab {
+    touch-action: manipulation;
+  }
+}
+
+/* ── FAB pill button styles (desktop: hidden; mobile: shown above) ─────────── */
+.mobile-fab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--panel-bg);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-hover);
+  border-radius: 100px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  white-space: nowrap;
+  /* Ensure tappable */
+  pointer-events: all !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-fab:active {
+  transform: scale(0.94);
+}
+
+.mobile-fab.is-active {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: var(--accent-blue);
+}
+
+.mobile-fab .fab-icon {
+  font-size: 15px;
+  line-height: 1;
 }

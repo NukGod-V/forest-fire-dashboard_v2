@@ -241,7 +241,7 @@ function LineChart({ fireData, theme }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function StatsPanel() {
+export default function StatsPanel({ mobileOpen = false }) {
   const { theme, filteredData, kpis } = useAppContext();
   const { high, mod, low } = kpis;
 
@@ -251,8 +251,11 @@ export default function StatsPanel() {
     .slice(0, 15);
 
   return (
-    <GlassPanel style={{ gridColumn: 3, gridRow: '1 / -1', animation: 'fadeInPanel 0.5s ease-out 0.2s both' }}>
-      <div style={{ flex: 1, overflowY: 'auto', padding: 18, scrollbarWidth: 'thin', scrollbarColor: 'rgba(128,128,128,0.15) transparent' }}>
+    <GlassPanel
+      className={`sidebar-panel${mobileOpen ? ' mobile-open' : ''}`}
+      style={{ gridColumn: 3, gridRow: '1 / -1', animation: 'fadeInPanel 0.5s ease-out 0.2s both' }}
+    >
+      <div className="panel-scroll-body" style={{ flex: 1, overflowY: 'auto', padding: 18, scrollbarWidth: 'thin', scrollbarColor: 'rgba(128,128,128,0.15) transparent' }}>
 
         {/* Bar chart */}
         <SectionHeading>Fires by Risk Level</SectionHeading>
